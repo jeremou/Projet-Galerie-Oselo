@@ -22,7 +22,7 @@ include_once 'layout/header.php';
 <div class="container mt-5">
     <div class="jumbotron">
         <h1 class="display-4">Welcome to Galerie Oselo</h1>
-        <p class="lead">Administration panel for managing artworks and warehouses</p>
+        <p class="lead">managing artworks and warehouses</p>
         <hr class="my-4">
         <div class="row">
             <div class="col-md-6">
