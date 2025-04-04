@@ -1,182 +1,174 @@
 <?php
 class Artwork {
-    // DB connection and table
     private $conn;
     private $table_name = "artworks";
- 
-    // Object properties
+
+    // Propriétés
     public $id;
     public $title;
-    public $artist;
-    public $year;
-    public $height;
+    public $year_of_production;
+    public $artist_name;
     public $width;
-    public $depth;
+    public $height;
     public $warehouse_id;
-    public $warehouse_name;
-    public $description;
-    public $image_url;
-    public $created_at;
-    public $updated_at;
- 
-    // Constructor
+
     public function __construct($db) {
         $this->conn = $db;
     }
- 
-    // Read all artworks with warehouse name
+
+    // Lire toutes les œuvres
     public function readAll() {
         $query = "SELECT a.*, w.name as warehouse_name 
-                  FROM " . $this->table_name . " a 
-                  LEFT JOIN warehouses w ON a.warehouse_id = w.id 
-                  ORDER BY a.title";
+                 FROM " . $this->table_name . " a 
+                 LEFT JOIN warehouses w ON a.warehouse_id = w.id 
+                 ORDER BY a.id DESC";
+        
         $stmt = $this->conn->prepare($query);
-        $stmt->execute();
- 
-        return $stmt;
-    }
-    
-    // Read the latest artworks
-    public function readLatest($limit = 5) {
-        $query = "SELECT a.*, w.name as warehouse_name 
-                  FROM " . $this->table_name . " a 
-                  LEFT JOIN warehouses w ON a.warehouse_id = w.id 
-                  ORDER BY a.created_at DESC 
-                  LIMIT :limit";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
         
         return $stmt;
     }
- 
-    // Read one artwork
+
+    // Lire une œuvre par son ID
     public function readOne() {
         $query = "SELECT a.*, w.name as warehouse_name 
-                  FROM " . $this->table_name . " a 
-                  LEFT JOIN warehouses w ON a.warehouse_id = w.id 
-                  WHERE a.id = ? 
-                  LIMIT 0,1";
+                 FROM " . $this->table_name . " a 
+                 LEFT JOIN warehouses w ON a.warehouse_id = w.id 
+                 WHERE a.id = ? 
+                 LIMIT 0,1";
+        
         $stmt = $this->conn->prepare($query);
         $stmt->bindParam(1, $this->id);
         $stmt->execute();
- 
+        
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
- 
+        
         if($row) {
             $this->title = $row['title'];
-            $this->artist = $row['artist'];
-            $this->year = $row['year'];
-            $this->height = $row['height'];
+            $this->year_of_production = $row['year_of_production'];
+            $this->artist_name = $row['artist_name'];
             $this->width = $row['width'];
-            $this->depth = $row['depth'];
+            $this->height = $row['height'];
             $this->warehouse_id = $row['warehouse_id'];
-            $this->warehouse_name = $row['warehouse_name'];
-            $this->description = $row['description'];
-            $this->image_url = $row['image_url'];
-            $this->created_at = $row['created_at'];
-            $this->updated_at = $row['updated_at'];
             return true;
         }
- 
+        
         return false;
     }
- 
-    // Create artwork
+
+    // Créer une nouvelle œuvre
     public function create() {
         $query = "INSERT INTO " . $this->table_name . " 
-                  SET title=:title, artist=:artist, year=:year, height=:height, 
-                      width=:width, depth=:depth, warehouse_id=:warehouse_id, 
-                      description=:description, image_url=:image_url";
+                 SET title = :title, 
+                     year_of_production = :year, 
+                     artist_name = :artist, 
+                     width = :width, 
+                     height = :height, 
+                     warehouse_id = :warehouse";
+        
         $stmt = $this->conn->prepare($query);
- 
-        // Sanitize inputs
+        
+        // Nettoyer et sécuriser les données
         $this->title = htmlspecialchars(strip_tags($this->title));
-        $this->artist = htmlspecialchars(strip_tags($this->artist));
-        $this->year = htmlspecialchars(strip_tags($this->year));
-        $this->height = htmlspecialchars(strip_tags($this->height));
+        $this->year_of_production = htmlspecialchars(strip_tags($this->year_of_production));
+        $this->artist_name = htmlspecialchars(strip_tags($this->artist_name));
         $this->width = htmlspecialchars(strip_tags($this->width));
-        $this->depth = htmlspecialchars(strip_tags($this->depth));
-        $this->warehouse_id = htmlspecialchars(strip_tags($this->warehouse_id));
-        $this->description = htmlspecialchars(strip_tags($this->description));
-        $this->image_url = htmlspecialchars(strip_tags($this->image_url));
- 
-        // Bind values
+        $this->height = htmlspecialchars(strip_tags($this->height));
+        
+        // Liaison des valeurs
         $stmt->bindParam(":title", $this->title);
-        $stmt->bindParam(":artist", $this->artist);
-        $stmt->bindParam(":year", $this->year);
-        $stmt->bindParam(":height", $this->height);
+        $stmt->bindParam(":year", $this->year_of_production);
+        $stmt->bindParam(":artist", $this->artist_name);
         $stmt->bindParam(":width", $this->width);
-        $stmt->bindParam(":depth", $this->depth);
-        $stmt->bindParam(":warehouse_id", $this->warehouse_id);
-        $stmt->bindParam(":description", $this->description);
-        $stmt->bindParam(":image_url", $this->image_url);
- 
-        // Execute query
+        $stmt->bindParam(":height", $this->height);
+        $stmt->bindParam(":warehouse", $this->warehouse_id);
+        
         if($stmt->execute()) {
             return true;
         }
- 
+        
         return false;
     }
- 
-    // Update artwork
+
+    // Mettre à jour une œuvre
     public function update() {
         $query = "UPDATE " . $this->table_name . " 
-                  SET title=:title, artist=:artist, year=:year, height=:height, 
-                      width=:width, depth=:depth, warehouse_id=:warehouse_id, 
-                      description=:description, image_url=:image_url
-                  WHERE id = :id";
+                 SET title = :title, 
+                     year_of_production = :year, 
+                     artist_name = :artist, 
+                     width = :width, 
+                     height = :height, 
+                     warehouse_id = :warehouse 
+                 WHERE id = :id";
+        
         $stmt = $this->conn->prepare($query);
- 
-        // Sanitize inputs
+        
+        // Nettoyer et sécuriser les données
         $this->id = htmlspecialchars(strip_tags($this->id));
         $this->title = htmlspecialchars(strip_tags($this->title));
-        $this->artist = htmlspecialchars(strip_tags($this->artist));
-        $this->year = htmlspecialchars(strip_tags($this->year));
-        $this->height = htmlspecialchars(strip_tags($this->height));
+        $this->year_of_production = htmlspecialchars(strip_tags($this->year_of_production));
+        $this->artist_name = htmlspecialchars(strip_tags($this->artist_name));
         $this->width = htmlspecialchars(strip_tags($this->width));
-        $this->depth = htmlspecialchars(strip_tags($this->depth));
-        $this->warehouse_id = htmlspecialchars(strip_tags($this->warehouse_id));
-        $this->description = htmlspecialchars(strip_tags($this->description));
-        $this->image_url = htmlspecialchars(strip_tags($this->image_url));
- 
-        // Bind values
+        $this->height = htmlspecialchars(strip_tags($this->height));
+        
+        // Liaison des valeurs
         $stmt->bindParam(":id", $this->id);
         $stmt->bindParam(":title", $this->title);
-        $stmt->bindParam(":artist", $this->artist);
-        $stmt->bindParam(":year", $this->year);
-        $stmt->bindParam(":height", $this->height);
+        $stmt->bindParam(":year", $this->year_of_production);
+        $stmt->bindParam(":artist", $this->artist_name);
         $stmt->bindParam(":width", $this->width);
-        $stmt->bindParam(":depth", $this->depth);
-        $stmt->bindParam(":warehouse_id", $this->warehouse_id);
-        $stmt->bindParam(":description", $this->description);
-        $stmt->bindParam(":image_url", $this->image_url);
- 
-        // Execute query
+        $stmt->bindParam(":height", $this->height);
+        $stmt->bindParam(":warehouse", $this->warehouse_id);
+        
         if($stmt->execute()) {
             return true;
         }
- 
+        
         return false;
     }
- 
-    // Delete artwork
+
+    // Supprimer une œuvre
     public function delete() {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = ?";
+        
         $stmt = $this->conn->prepare($query);
- 
-        // Sanitize input
-        $this->id = htmlspecialchars(strip_tags($this->id));
- 
-        // Bind id of record to delete
         $stmt->bindParam(1, $this->id);
- 
-        // Execute query
+        
         if($stmt->execute()) {
             return true;
         }
- 
+        
+        return false;
+    }
+
+    // Lire les œuvres par entrepôt
+    public function readByWarehouse($warehouse_id) {
+        $query = "SELECT * FROM " . $this->table_name . " 
+                 WHERE warehouse_id = ? 
+                 ORDER BY id DESC";
+        
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(1, $warehouse_id);
+        $stmt->execute();
+        
+        return $stmt;
+    }
+
+    // Assigner à un entrepôt
+    public function assignToWarehouse() {
+        $query = "UPDATE " . $this->table_name . " 
+                 SET warehouse_id = :warehouse_id 
+                 WHERE id = :id";
+        
+        $stmt = $this->conn->prepare($query);
+        
+        $stmt->bindParam(":warehouse_id", $this->warehouse_id);
+        $stmt->bindParam(":id", $this->id);
+        
+        if($stmt->execute()) {
+            return true;
+        }
+        
         return false;
     }
 }

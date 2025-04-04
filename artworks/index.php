@@ -1,100 +1,86 @@
 <?php
 // Inclusion des fichiers nécessaires
 include_once '../config/database.php';
-include_once '../models/Oeuvre.php';
+include_once '../models/Artwork.php';
 
 // Définir le chemin vers la racine
 $home_path = '../';
 
 // Instantiation de la base de données
 $database = new Database();
-$db = $d atabase->getConnection();
+$db = $database->getConnection();
 
-// Instantiation de l'objet Oeuvre
-$oeuvre = new Oeuvre($db);
+// Instantiation de l'objet Artwork
+$artwork = new Artwork($db);
 
 // Titre de la page
-$page_title = "Gestion des Œuvres - Galerie Oselo";
+$page_title = "Artworks - Galerie Oselo";
 
 // En-tête HTML
 include_once '../layout/header.php';
+
+// Récupérer les œuvres
+$stmt = $artwork->readAll();
+$num = $stmt->rowCount();
 ?>
 
 <div class="container mt-4">
-    <div class="row mb-3">
-        <div class="col-md-8">
-            <h1>Gestion des Œuvres</h1>
-        </div>
-        <div class="col-md-4 text-end">
-            <a href="creer.php" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Nouvelle Œuvre
-            </a>
-        </div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Artworks</h1>
+        <a href="create.php" class="btn btn-primary"><i class="fas fa-plus"></i> Add New Artwork</a>
     </div>
     
-    <?php if(isset($_GET['success'])): ?>
-        <div class="alert alert-success"><?php echo $_GET['success']; ?></div>
-    <?php endif; ?>
+    <?php
+    // Affichage du message de succès ou d'erreur s'il existe
+    if(isset($_GET['success'])) {
+        echo '<div class="alert alert-success">' . $_GET['success'] . '</div>';
+    }
+    if(isset($_GET['error'])) {
+        echo '<div class="alert alert-danger">' . $_GET['error'] . '</div>';
+    }
+    ?>
     
-    <?php if(isset($_GET['error'])): ?>
-        <div class="alert alert-danger"><?php echo $_GET['error']; ?></div>
-    <?php endif; ?>
-    
-    <div class="card">
-        <div class="card-header">
-            <h5 class="mb-0">Liste des Œuvres</h5>
-        </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Titre</th>
-                            <th>Artiste</th>
-                            <th>Année</th>
-                            <th>Dimensions (cm)</th>
-                            <th>Entrepôt</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $stmt = $oeuvre->lireTout();
-                        while($row = $stmt->fetch(PDO::FETCH_ASSOC)):
-                        ?>
+    <?php if($num > 0): ?>
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Artist</th>
+                        <th>Year</th>
+                        <th>Dimensions</th>
+                        <th>Warehouse</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while($row = $stmt->fetch(PDO::FETCH_ASSOC)): ?>
                         <tr>
                             <td><?php echo $row['id']; ?></td>
-                            <td><?php echo $row['titre']; ?></td>
-                            <td><?php echo $row['nom_artiste']; ?></td>
-                            <td><?php echo $row['annee_production']; ?></td>
-                            <td><?php echo $row['largeur'] . ' x ' . $row['hauteur']; ?></td>
-                            <td><?php echo $row['nom_entrepot'] ? $row['nom_entrepot'] : 'Non assigné'; ?></td>
+                            <td><?php echo $row['title']; ?></td>
+                            <td><?php echo $row['artist_name']; ?></td>
+                            <td><?php echo $row['year_of_production']; ?></td>
+                            <td><?php echo $row['width'] . ' x ' . $row['height'] . ' cm'; ?></td>
                             <td>
-                                <a href="modifier.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-edit"></i>
-                                </a>
-                                <a href="supprimer.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-outline-danger" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette œuvre ?');">
-                                    <i class="fas fa-trash"></i>
-                                </a>
+                                <?php echo $row['warehouse_id'] ? $row['warehouse_name'] : 'Not assigned'; ?>
+                            </td>
+                            <td>
+                                <a href="assign.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-info" title="Assign to warehouse"><i class="fas fa-warehouse"></i></a>
+                                <a href="update.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-primary" title="Edit"><i class="fas fa-edit"></i></a>
+                                <a href="delete.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this artwork?')" title="Delete"><i class="fas fa-trash"></i></a>
                             </td>
                         </tr>
-                        <?php endwhile; ?>
-                        
-                        <?php if($stmt->rowCount() == 0): ?>
-                        <tr>
-                            <td colspan="7" class="text-center">Aucune œuvre disponible</td>
-                        </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
         </div>
-    </div>
+    <?php else: ?>
+        <div class="alert alert-info">No artworks found.</div>
+    <?php endif; ?>
 </div>
 
 <?php
 // Pied de page HTML
 include_once '../layout/footer.php';
 ?>
- 
